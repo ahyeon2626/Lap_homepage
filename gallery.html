@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gallery — Research Lab</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ===== Gallery Page ===== */
+    .gallery-hero {
+      padding-top: calc(var(--nav-h) + 80px);
+      padding-bottom: 72px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .gallery-hero-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .gallery-hero-title {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 14px;
+    }
+
+    .gallery-hero-sub {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* ===== Gallery Filters ===== */
+    .gallery-filters {
+      display: flex;
+      gap: 0;
+      margin-bottom: 48px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .gallery-filter {
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all var(--transition);
+      margin-bottom: -1px;
+    }
+
+    .gallery-filter:hover { color: var(--text); }
+
+    .gallery-filter.active {
+      color: var(--text);
+      border-bottom-color: var(--text);
+    }
+
+    /* ===== Gallery Grid ===== */
+    .gallery-section {
+      padding: 72px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .gallery-group-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 64px;
+    }
+
+    .gallery-grid:last-child { margin-bottom: 0; }
+
+    .gallery-item {
+      aspect-ratio: 4/3;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      transition: opacity var(--transition);
+    }
+
+    .gallery-item.hidden { display: none; }
+
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+
+    .gallery-item:hover img { transform: scale(1.03); }
+
+    .gallery-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 20px;
+      transition: background 0.3s ease;
+    }
+
+    .gallery-item:hover .gallery-overlay {
+      background: rgba(0,0,0,0.52);
+    }
+
+    .gallery-overlay-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: white;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      line-height: 1.4;
+    }
+
+    .gallery-overlay-date {
+      font-size: 13px;
+      color: rgba(255,255,255,0.75);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.3s ease 0.04s, transform 0.3s ease 0.04s;
+      margin-top: 4px;
+    }
+
+    .gallery-item:hover .gallery-overlay-title,
+    .gallery-item:hover .gallery-overlay-date {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* placeholder when no image */
+    .gallery-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--text-muted);
+    }
+
+    .gallery-placeholder svg {
+      width: 32px;
+      height: 32px;
+      opacity: 0.4;
+    }
+
+    .gallery-placeholder span {
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ===== Lightbox ===== */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lightbox.open { display: flex; }
+
+    .lightbox-inner {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+    }
+
+    .lightbox-img {
+      max-width: 90vw;
+      max-height: 85vh;
+      object-fit: contain;
+      border-radius: 3px;
+      display: block;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 28px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+    }
+
+    .lightbox-close:hover { color: white; }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 700px) {
+      .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    }
+
+    @media (max-width: 480px) {
+      .gallery-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="navbar" id="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-logo">LAB</a>
+      <nav class="nav-links">
+        <a href="index.html#about">About</a>
+        <a href="index.html#research">Research</a>
+        <a href="index.html#members">Members</a>
+        <a href="index.html#publications">Publications</a>
+        <a href="index.html#contact">Contact</a>
+        <a href="gallery.html" style="color: var(--text); font-weight: 600;">Gallery</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="index.html#about" class="mobile-link">About</a>
+      <a href="index.html#research" class="mobile-link">Research</a>
+      <a href="index.html#members" class="mobile-link">Members</a>
+      <a href="index.html#publications" class="mobile-link">Publications</a>
+      <a href="index.html#contact" class="mobile-link">Contact</a>
+      <a href="gallery.html" class="mobile-link" style="color: var(--text); font-weight: 600;">Gallery</a>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <div class="gallery-hero">
+    <div class="container">
+      <p class="gallery-hero-label">Gallery</p>
+      <h1 class="gallery-hero-title">연구실 갤러리</h1>
+      <p class="gallery-hero-sub">연구실 활동, 행사, 일상을 담은 사진 모음입니다.</p>
+    </div>
+  </div>
+
+  <!-- Gallery -->
+  <section class="gallery-section">
+    <div class="container">
+
+      <div class="gallery-filters">
+        <button class="gallery-filter active" data-filter="all">All</button>
+        <button class="gallery-filter" data-filter="2026">2026</button>
+        <button class="gallery-filter" data-filter="2025">2025</button>
+      </div>
+
+      <!-- 2026 -->
+      <p class="gallery-group-title">2026</p>
+      <div class="gallery-grid">
+        <div class="gallery-item" data-year="2026">
+          <img src="단체사진.jpg" alt="연구실 단체사진 2026" />
+          <div class="gallery-overlay">
+            <span class="gallery-overlay-title">2026년 연구원 단체사진</span>
+            <span class="gallery-overlay-date">2026.04.24</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2025 -->
+      <p class="gallery-group-title">2025</p>
+      <div class="gallery-grid">
+        <div class="gallery-item" data-year="2025">
+          <div class="gallery-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            <span>사진 준비 중</span>
+          </div>
+        </div>
+        <div class="gallery-item" data-year="2025">
+          <div class="gallery-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            <span>사진 준비 중</span>
+          </div>
+        </div>
+        <div class="gallery-item" data-year="2025">
+          <div class="gallery-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            <span>사진 준비 중</span>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </section>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-inner">
+      <button class="lightbox-close" id="lightboxClose">&times;</button>
+      <img class="lightbox-img" id="lightboxImg" src="" alt="" />
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <p class="footer-name">Research Lab &copy; 2025</p>
+      <p class="footer-address">빅데이터응용학과, 한남대학교</p>
+    </div>
+  </footer>
+
+  <script>
+    // Navbar scroll
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 20);
+    }, { passive: true });
+
+    // Hamburger
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+    hamburger.addEventListener('click', () => {
+      mobileMenu.classList.toggle('open');
+    });
+    document.querySelectorAll('.mobile-link').forEach(link => {
+      link.addEventListener('click', () => mobileMenu.classList.remove('open'));
+    });
+
+    // Gallery filter
+    const filters = document.querySelectorAll('.gallery-filter');
+    const items = document.querySelectorAll('.gallery-item');
+    const groupTitles = document.querySelectorAll('.gallery-group-title');
+
+    filters.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filters.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const year = btn.dataset.filter;
+        items.forEach(item => {
+          item.classList.toggle('hidden', year !== 'all' && item.dataset.year !== year);
+        });
+        groupTitles.forEach(title => {
+          const grid = title.nextElementSibling;
+          const visible = grid && [...grid.querySelectorAll('.gallery-item')].some(i => !i.classList.contains('hidden'));
+          title.style.display = (year === 'all' || visible) ? '' : 'none';
+          if (grid) grid.style.display = (year === 'all' || visible) ? '' : 'none';
+        });
+      });
+    });
+
+    // Lightbox (for when images are added)
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxClose = document.getElementById('lightboxClose');
+
+    document.querySelectorAll('.gallery-item img').forEach(img => {
+      img.addEventListener('click', () => {
+        lightboxImg.src = img.src;
+        lightboxImg.alt = img.alt;
+        lightbox.classList.add('open');
+      });
+    });
+
+    lightboxClose.addEventListener('click', () => lightbox.classList.remove('open'));
+    lightbox.addEventListener('click', e => {
+      if (e.target === lightbox) lightbox.classList.remove('open');
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') lightbox.classList.remove('open');
+    });
+
+    // Fade-in
+    const fadeEls = document.querySelectorAll('.gallery-item');
+    const fadeObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+          fadeObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08 });
+
+    fadeEls.forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(12px)';
+      el.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+      fadeObserver.observe(el);
+    });
+  </script>
+</body>
+</html>
